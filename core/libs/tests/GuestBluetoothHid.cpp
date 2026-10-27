@@ -111,6 +111,22 @@ int main() {
     std::memset(&filled, 0x5a, sizeof(filled));
     Require(sceBluetoothHidParamInitialize(&filled, nullptr) == 0 && filled.threadParam == nullptr && filled.reserved == 0 && filled.padding == 0x5a5a5a5au, "a null thread parameter was not stored as given");
     Require(sceBluetoothHidParamInitialize(nullptr, &thread) == invalidArgument, "a null parameter block was not refused");
+    Require(sceBluetoothHidThreadParamInitialize(nullptr, 700, 0x3f) == invalidArgument, "a null thread parameter block was not refused");
+    std::memset(&thread, 0x5a, sizeof(thread));
+    Require(sceBluetoothHidThreadParamInitialize(&thread, 700, 0x3f) == 0, "thread parameter initialization failed");
+    unsigned char threadBytes[sizeof(BluetoothHidThreadParam)];
+    std::memcpy(threadBytes, &thread, sizeof(threadBytes));
+    std::int32_t storedPriority = 0;
+    std::memcpy(&storedPriority, threadBytes, sizeof(storedPriority));
+    std::uint64_t storedAffinity = 0;
+    std::memcpy(&storedAffinity, threadBytes + 8, sizeof(storedAffinity));
+    std::uint32_t storedReserved = 1;
+    std::memcpy(&storedReserved, threadBytes + 16, sizeof(storedReserved));
+    Require(storedPriority == 700, "priority was not stored at offset 0");
+    Require(threadBytes[4] == 0x5a && threadBytes[5] == 0x5a && threadBytes[6] == 0x5a && threadBytes[7] == 0x5a, "bytes 4 to 7 of the thread parameter block changed");
+    Require(storedAffinity == 0x3f, "affinity mask was not stored at offset 8");
+    Require(storedReserved == 0, "reserved word at offset 16 was not cleared");
+    Require(threadBytes[20] == 0x5a && threadBytes[21] == 0x5a && threadBytes[22] == 0x5a && threadBytes[23] == 0x5a, "bytes 20 to 23 of the thread parameter block changed");
     std::puts("BluetoothHid tests passed");
     return 0;
 }
