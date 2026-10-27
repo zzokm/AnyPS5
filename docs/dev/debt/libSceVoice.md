@@ -1,5 +1,9 @@
 # libSceVoice technical debt
 
+### Silent stubs
+
+- [sceVoiceReadFromOPort and sceVoiceWriteToIPort](../../../core/libs/prx/libSceVoice/Export.cpp) (libSceVoice) - port audio streaming is not implemented: `sceVoiceReadFromOPort` returns 0 and writes size 0 (indicating no data is available), and `sceVoiceWriteToIPort` validates pointers, initialization and input port type and returns 0 writing size 0.
+
 ### Functional
 
 - [Voice resource and port state](../../../core/libs/prx/libSceVoice/Export.cpp): resource information is eight bytes containing four 16-bit limits selected by initialization mode. Reset, pause and resume use confirmed initialization, range and missing-port errors; repeated pause/resume succeed. GetPortInfo preserves unused output fields and reports native frame sizes, but still reports a constant ready state and does not reproduce stopped-state or snapshot-slot errors. The host has no buffered voice processing or device reset backend, so reset only covers empty software ports and pause flags currently affect no audio. Initialization validates native modes and version 100, but still lacks event callback delivery and backend creation. Port creation enforces recovered format and resource limits, but does not allocate device or codec backends.

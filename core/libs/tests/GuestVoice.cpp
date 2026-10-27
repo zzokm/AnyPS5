@@ -47,6 +47,10 @@ void TestNotInitialized() {
     Require(sceVoiceSetMuteFlagAll(true) == NotInitialized);
     Require(sceVoiceSetBitRate(0, 16000) == NotInitialized);
     Require(sceVoiceUpdatePort(0, nullptr) == NotInitialized);
+    std::uint8_t buffer[64]{};
+    std::uint32_t bufSize = sizeof(buffer);
+    RequireThrows([&] { sceVoiceReadFromOPort(0, buffer, &bufSize); });
+    RequireThrows([&] { sceVoiceWriteToIPort(0, buffer, &bufSize, 0); });
 }
 
 std::uint32_t CreatePort(std::int32_t type, float volume) {
@@ -449,7 +453,22 @@ int main() {
             Require(sceVoiceSetMuteFlag(id, value) == 0);
             Require(sceVoiceGetMuteFlag(id, &muted) == 0 && muted == (value != 0));
         }
+        std::uint8_t ioBuffer[64]{};
+        std::uint32_t ioSize = sizeof(ioBuffer);
+        if (type <= 2) {
+            RequireThrows([&] { sceVoiceWriteToIPort(id, nullptr, &ioSize, 0); });
+            RequireThrows([&] { sceVoiceWriteToIPort(id, ioBuffer, nullptr, 0); });
+            RequireThrows([&] { sceVoiceReadFromOPort(id, ioBuffer, &ioSize); });
+            Require(sceVoiceWriteToIPort(id, ioBuffer, &ioSize, 0) == 0 && ioSize == 0);
+        } else {
+            RequireThrows([&] { sceVoiceReadFromOPort(id, nullptr, &ioSize); });
+            RequireThrows([&] { sceVoiceReadFromOPort(id, ioBuffer, nullptr); });
+            RequireThrows([&] { sceVoiceWriteToIPort(id, ioBuffer, &ioSize, 0); });
+            Require(sceVoiceReadFromOPort(id, ioBuffer, &ioSize) == 0 && ioSize == 0);
+        }
         Require(sceVoiceDeletePort(id) == 0);
+        RequireThrows([&] { sceVoiceWriteToIPort(id, ioBuffer, &ioSize, 0); });
+        RequireThrows([&] { sceVoiceReadFromOPort(id, ioBuffer, &ioSize); });
     }
     Require(sceVoiceEnd_nid_postfix() == 0);
 
