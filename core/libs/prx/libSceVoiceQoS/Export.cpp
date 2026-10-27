@@ -182,17 +182,17 @@ int APS5_VABI sceVoiceQoSWritePacket(int32_t connectionId, const void* buffer, u
 }
 
 int APS5_VABI sceVoiceQoSGetLocalEndpointAttribute(int32_t localId, int32_t attributeId, void* value, int32_t size) {
-    NotImplemented_nid_no_patch(__func__);
-    return 0;
+    return Locked([&](QoS&) -> int {
+        if (localId != 0 || !value || attributeId < 0 || attributeId > 3 || size != (attributeId % 2 == 0 ? 4 : 1)) return SCE_VOICE_ERROR_LIBVOICEQOS_ARGUMENT_INVALID;
+        throw std::runtime_error("sceVoiceQoSGetLocalEndpointAttribute: voice port attributes are not implemented");
+    });
 }
 
 int APS5_VABI sceVoiceQoSGetRemoteEndpointAttribute(int32_t remoteId, int32_t attributeId, void* value, int32_t size) {
-    (void)remoteId;
-    (void)attributeId;
-    (void)value;
-    (void)size;
-    NotImplemented_nid_no_patch(__func__);
-    return 0;
+    return Locked([&](QoS& qos) -> int {
+        if (remoteId < 0 || remoteId >= qos.endpointLimit || !value || attributeId != 7 || size != 1) return SCE_VOICE_ERROR_LIBVOICEQOS_ARGUMENT_INVALID;
+        throw std::runtime_error("sceVoiceQoSGetRemoteEndpointAttribute: voice port attributes are not implemented");
+    });
 }
 
 int APS5_VABI sceVoiceQoSGetConnectionAttribute(int32_t connectionId, int32_t attributeId, void* value, int32_t size) {
